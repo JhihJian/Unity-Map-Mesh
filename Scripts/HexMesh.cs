@@ -46,80 +46,54 @@ public class HexMesh : MonoBehaviour {
             Triangulate(d, cell);
         }
     }
-  
+
 
     void Triangulate(HexDirection direction, HexCell cell)
     {
         Vector3 center = cell.transform.localPosition;
         Vector3 v1 = center + HexMetrics.GetFirstSolidCorner(direction);
         Vector3 v2 = center + HexMetrics.GetSecondSolidCorner(direction);
-        //AddTriangle(
-        //    center,
-        //    center + HexMetrics.GetFirstCorner(direction),
-        //    center + HexMetrics.GetSecondCorner(direction)
-        //);
-        AddTriangle(
-            center,
-            center + HexMetrics.GetFirstSolidCorner(direction),
-            center + HexMetrics.GetSecondSolidCorner(direction)
-        );
+
+        AddTriangle(center, v1, v2);
         AddTriangleColor(cell.color);
+
+        if (direction == HexDirection.NE)
+        {
+            TriangulateConnection(direction, cell, v1, v2);
+        }
+        if (direction <= HexDirection.SE)
+        {
+            TriangulateConnection(direction, cell, v1, v2);
+        }
+    }
+
+    void TriangulateConnection(
+        HexDirection direction, HexCell cell, Vector3 v1, Vector3 v2
+    )
+    {
+        HexCell neighbor = cell.GetNeighbor(direction);
+        if (neighbor == null)
+        {
+            return;
+        }
+
         Vector3 bridge = HexMetrics.GetBridge(direction);
-        //Vector3 v3 = center + HexMetrics.GetFirstCorner(direction);
-        //Vector3 v4 = center + HexMetrics.GetSecondCorner(direction);
         Vector3 v3 = v1 + bridge;
         Vector3 v4 = v2 + bridge;
+        //填充交接处三角形
+        HexCell nextNeighbor = cell.GetNeighbor(direction.Next());
+        if (nextNeighbor != null)
+        {
+            if (direction <= HexDirection.E && nextNeighbor != null)
+            {
+                AddTriangle(v2, v4, v2 + HexMetrics.GetBridge(direction.Next()));
+                AddTriangleColor(cell.color, neighbor.color, nextNeighbor.color);
+            }
+        }
         AddQuad(v1, v2, v3, v4);
-       
-        //AddTriangleColor(cell.color);
-        HexCell prevNeighbor = cell.GetNeighbor(direction.Previous()) ?? cell;
-        HexCell neighbor = cell.GetNeighbor(direction) ?? cell;
-        HexCell nextNeighbor = cell.GetNeighbor(direction.Next()) ?? cell;
-        //AddTriangleColor(
-        //    cell.color,
-        //    (cell.color + prevNeighbor.color + neighbor.color) / 3f,
-        //    (cell.color + neighbor.color + nextNeighbor.color) / 3f
-        //);
-        // AddQuadColor(
-        //    cell.color,
-        //    cell.color,
-        //    (cell.color + prevNeighbor.color + neighbor.color) / 3f,
-        //    (cell.color + neighbor.color + nextNeighbor.color) / 3f
-
-        //);
-        Color bridgeColor = (cell.color + neighbor.color) * 0.5f;
-        AddQuadColor(cell.color, bridgeColor);
-        AddTriangle(v1, center + HexMetrics.GetFirstCorner(direction), v3);
-        AddTriangleColor(
-            cell.color,
-            (cell.color + prevNeighbor.color + neighbor.color) / 3f,
-            bridgeColor
-        );
-        AddTriangle(v2, v4, center + HexMetrics.GetSecondCorner(direction));
-        AddTriangleColor(
-            cell.color,
-            bridgeColor,
-            (cell.color + neighbor.color + nextNeighbor.color) / 3f
-        );
+        AddQuadColor(cell.color, neighbor.color);
     }
-    //void Triangulate (HexCell cell) {
-    //    Vector3 center = cell.transform.localPosition;
-    //    // AddTriangle(
-    //    //     center,
-    //    //     center + HexMetrics.corners[0],
-    //    //     center + HexMetrics.corners[1]
-    //    // );
-    //    // Vector3 center = cell.transform.localPosition;
-    //    for (int i = 0; i < 6; i++) {
-    //        AddTriangle(
-    //            center,
-    //            center + HexMetrics.corners[i],
-    //            center + HexMetrics.corners[i + 1]
-    //        );
-    //        AddTriangleColor(cell.color);
-    //    }
-    //    meshCollider.sharedMesh = hexMesh;
-    //}
+
     void AddTriangleColor (Color color) {
         colors.Add(color);
         colors.Add(color);
