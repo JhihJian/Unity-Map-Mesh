@@ -207,8 +207,8 @@ public class HexMesh : MonoBehaviour {
       Vector3 right, HexCell rightCell
   )
     {
-        HexEdgeType leftEdgeType = bottomCell.GetEdgeType(leftCell);
-        HexEdgeType rightEdgeType = bottomCell.GetEdgeType(rightCell);
+		HexEdgeType leftEdgeType = bottomCell.GetEdgeType(leftCell);
+		HexEdgeType rightEdgeType = bottomCell.GetEdgeType(rightCell);
         if (leftEdgeType == HexEdgeType.Slope)
         {
             if (rightEdgeType == HexEdgeType.Slope)
@@ -216,21 +216,23 @@ public class HexMesh : MonoBehaviour {
                 TriangulateCornerTerraces(
                     bottom, bottomCell, left, leftCell, right, rightCell
                 );
-                return;
             }
             //如果右边缘是平坦的，那么我们必须从左开始而不是从底部开始倾斜。
-            if (rightEdgeType == HexEdgeType.Flat)
+            else if (rightEdgeType == HexEdgeType.Flat)
             {
                 TriangulateCornerTerraces(
                     left, leftCell, right, rightCell, bottom, bottomCell
                 );
-                return;
             }
-            TriangulateCornerTerracesCliff(
-                bottom, bottomCell, left, leftCell, right, rightCell
-            );
+            else
+            {
+                TriangulateCornerTerracesCliff(
+                    bottom, bottomCell, left, leftCell, right, rightCell
+                );
+            }
             return;
         }
+
         //如果左边缘是平坦的，那么我们必须从右开始。
         if (rightEdgeType == HexEdgeType.Slope)
         {
@@ -239,11 +241,13 @@ public class HexMesh : MonoBehaviour {
                 TriangulateCornerTerraces(
                     right, rightCell, bottom, bottomCell, left, leftCell
                 );
-                return;
             }
-            TriangulateCornerCliffTerraces(
-                bottom, bottomCell, left, leftCell, right, rightCell
-            );
+            else
+            {
+                TriangulateCornerCliffTerraces(
+                    bottom, bottomCell, left, leftCell, right, rightCell
+                );
+            }
             return;
         }
         //底部单元格的两侧都有悬崖的情况
@@ -261,10 +265,12 @@ public class HexMesh : MonoBehaviour {
                     left, leftCell, right, rightCell, bottom, bottomCell
                 );
             }
-            return;
         }
-        AddTriangle(bottom, left, right);
-        AddTriangleColor(bottomCell.color, leftCell.color, rightCell.color);
+        else
+        {
+            AddTriangle(bottom, left, right);
+            AddTriangleColor(bottomCell.color, leftCell.color, rightCell.color);
+        }
     }
     //用于填充同高度连接时侧面出现的无梯度三角形，转换为有梯度三角形
     void TriangulateCornerTerraces(
