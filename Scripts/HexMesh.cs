@@ -48,7 +48,17 @@ public class HexMesh : MonoBehaviour {
             Triangulate(d, cell);
         }
     }
-
+    //增加一个不做干扰的三角形初始化方法
+    void AddTriangleUnperturbed(Vector3 v1, Vector3 v2, Vector3 v3)
+    {
+        int vertexIndex = vertices.Count;
+        vertices.Add(v1);
+        vertices.Add(v2);
+        vertices.Add(v3);
+        triangles.Add(vertexIndex);
+        triangles.Add(vertexIndex + 1);
+        triangles.Add(vertexIndex + 2);
+    }
 
     void Triangulate(HexDirection direction, HexCell cell)
     {
@@ -342,7 +352,8 @@ public class HexMesh : MonoBehaviour {
         {
             b = -b;
         }
-        Vector3 boundary = Vector3.Lerp(begin, right, b);
+        //通过在左右点之间进行插值来找到边界点。补充干扰
+        Vector3 boundary = Vector3.Lerp(Perturb(begin), Perturb(right), b);
         Color boundaryColor = Color.Lerp(beginCell.color, rightCell.color, b);
         //如果顶部边缘是斜坡，则我们再次需要连接梯田和悬崖。
         TriangulateBoundaryTriangle(
@@ -357,7 +368,7 @@ public class HexMesh : MonoBehaviour {
         }
         else
         {
-            AddTriangle(left, right, boundary);
+            AddTriangleUnperturbed(Perturb(left), Perturb(right), boundary);
             AddTriangleColor(leftCell.color, rightCell.color, boundaryColor);
         }
 
@@ -374,7 +385,8 @@ public class HexMesh : MonoBehaviour {
         {
             b = -b;
         }
-        Vector3 boundary = Vector3.Lerp(begin, left, b);
+        //通过在左右点之间进行插值来找到边界点。补充干扰
+        Vector3 boundary = Vector3.Lerp(Perturb(begin), Perturb(left), b);
         Color boundaryColor = Color.Lerp(beginCell.color, leftCell.color, b);
 
         TriangulateBoundaryTriangle(
@@ -389,7 +401,7 @@ public class HexMesh : MonoBehaviour {
         }
         else
         {
-            AddTriangle(left, right, boundary);
+            AddTriangleUnperturbed(Perturb(left), Perturb(right), boundary);
             AddTriangleColor(leftCell.color, rightCell.color, boundaryColor);
         }
     }
@@ -400,23 +412,24 @@ public class HexMesh : MonoBehaviour {
         Vector3 boundary, Color boundaryColor
     )
     {
-        Vector3 v2 = HexMetrics.TerraceLerp(begin, left, 1);
+        Vector3 v2 = Perturb(HexMetrics.TerraceLerp(begin, left, 1));
         Color c2 = HexMetrics.TerraceLerp(beginCell.color, leftCell.color, 1);
 
-        AddTriangle(begin, v2, boundary);
+        
+        AddTriangleUnperturbed(Perturb(begin), v2, boundary);
         AddTriangleColor(beginCell.color, c2, boundaryColor);
 
         for (int i = 2; i < HexMetrics.terraceSteps; i++)
         {
             Vector3 v1 = v2;
             Color c1 = c2;
-            v2 = HexMetrics.TerraceLerp(begin, left, i);
+            v2 = Perturb(HexMetrics.TerraceLerp(begin, left, i));
             c2 = HexMetrics.TerraceLerp(beginCell.color, leftCell.color, i);
-            AddTriangle(v1, v2, boundary);
+            AddTriangleUnperturbed(v1,v2, boundary);
             AddTriangleColor(c1, c2, boundaryColor);
         }
 
-        AddTriangle(v2, left, boundary);
+        AddTriangleUnperturbed(v2, Perturb(left), boundary);
         AddTriangleColor(c2, leftCell.color, boundaryColor);
     }
     //节点扰动增加噪音

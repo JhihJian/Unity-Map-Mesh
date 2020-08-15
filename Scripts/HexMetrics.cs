@@ -11,7 +11,7 @@ public class HexMetrics : MonoBehaviour
     public const float verticalTerraceStepSize = 1f / (terracesPerSlope + 1);
     public const float horizontalTerraceStepSize = 1f / terraceSteps;
     //用于六边形交界过渡
-    public const float solidFactor = 0.75f;
+    public const float solidFactor = 0.5f;
     public const float elevationStep = 5f;
     public const float blendFactor = 1f - solidFactor;
     //用于确认六边形顶点位置
@@ -20,7 +20,7 @@ public class HexMetrics : MonoBehaviour
     //节点扰动 噪音纹理
     public static Texture2D noiseSource;
     //节点的噪音扰动强度
-    public const float cellPerturbStrength = 5f;
+    public const float cellPerturbStrength = 4f;
     //缩放节点采集坐标，使噪音更加平滑
     public const float noiseScale = 0.003f;
     //高度的扰动强度
