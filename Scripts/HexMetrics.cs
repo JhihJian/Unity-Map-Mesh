@@ -25,6 +25,10 @@ public class HexMetrics : MonoBehaviour
     public const float noiseScale = 0.003f;
     //高度的扰动强度
     public const float elevationPerturbStrength = 1.5f;
+    //定义plane中块的数量
+    public const int chunkSizeX = 5, chunkSizeZ = 5;
+
+
     static Vector3[] corners = {
         new Vector3(0f, 0f, outerRadius),
         new Vector3(innerRadius, 0f, 0.5f * outerRadius),

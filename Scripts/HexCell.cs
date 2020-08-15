@@ -11,6 +11,8 @@ public class HexCell : MonoBehaviour
     public HexCoordinates coordinates;
     public Color color;
     public RectTransform uiRect;
+    //确认所属块
+    public HexGridChunk chunk;
     public HexCell GetNeighbor(HexDirection direction)
     {
         return neighbors[(int)direction];
