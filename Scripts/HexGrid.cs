@@ -20,12 +20,14 @@ public class HexGrid : MonoBehaviour
     HexCell[] cells;
     HexMesh hexMesh;
     private Canvas gridCanvas;
-
+    
+    public Texture2D noiseSource;
     void Awake()
     {
         gridCanvas = GetComponentInChildren<Canvas>();
         hexMesh = GetComponentInChildren<HexMesh>();
         cells = new HexCell[height * width];
+        HexMetrics.noiseSource = noiseSource;
 
         for (int z = 0, i = 0; z < height; z++)
         {
@@ -78,6 +80,7 @@ public class HexGrid : MonoBehaviour
         cell.transform.localPosition = position;
         cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
         cell.color = defaultColor;
+
         if (x > 0)
         {
             cell.SetNeighbor(HexDirection.W, cells[index - 1]);
@@ -109,6 +112,12 @@ public class HexGrid : MonoBehaviour
         label.text = cell.coordinates.ToStringOnSeparateLines();
         //保存位置信息uiRect 
         cell.uiRect = label.rectTransform;
+        //初始边产生扰动
+        cell.Elevation = 0;
 
+    }
+    void OnEnable()
+    {
+        HexMetrics.noiseSource = noiseSource;
     }
 }

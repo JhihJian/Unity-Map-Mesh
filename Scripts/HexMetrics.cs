@@ -17,8 +17,15 @@ public class HexMetrics : MonoBehaviour
     //用于确认六边形顶点位置
     public const float outerRadius = 10f;
     public const float innerRadius = outerRadius * 0.866025404f;
-    
-     static Vector3[] corners = {
+    //节点扰动 噪音纹理
+    public static Texture2D noiseSource;
+    //节点的噪音扰动强度
+    public const float cellPerturbStrength = 5f;
+    //缩放节点采集坐标，使噪音更加平滑
+    public const float noiseScale = 0.003f;
+    //高度的扰动强度
+    public const float elevationPerturbStrength = 1.5f;
+    static Vector3[] corners = {
         new Vector3(0f, 0f, outerRadius),
         new Vector3(innerRadius, 0f, 0.5f * outerRadius),
         new Vector3(innerRadius, 0f, -0.5f * outerRadius),
@@ -78,5 +85,8 @@ public class HexMetrics : MonoBehaviour
         }
         return HexEdgeType.Cliff;
     }
-
+    public static Vector4 SampleNoise(Vector3 position)
+    {
+        return noiseSource.GetPixelBilinear(position.x* noiseScale, position.z* noiseScale);
+    }
 }

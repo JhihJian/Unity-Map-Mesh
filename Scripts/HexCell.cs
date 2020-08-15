@@ -20,6 +20,15 @@ public class HexCell : MonoBehaviour
         neighbors[(int)direction] = cell;
         cell.neighbors[(int)direction.Opposite()] = this;
     }
+    public Vector3 Position
+    {
+        get
+        {
+            return transform.localPosition;
+        }
+    }
+
+
     public int Elevation
     {
         get
@@ -31,11 +40,17 @@ public class HexCell : MonoBehaviour
             elevation = value;
             Vector3 position = transform.localPosition;
             position.y = value * HexMetrics.elevationStep;
+            //对整个单元格做高度的扰动
+            position.y +=
+    (HexMetrics.SampleNoise(position).y * 2f - 1f) *
+    HexMetrics.elevationPerturbStrength;
             transform.localPosition = position;
 
             Vector3 uiPosition = uiRect.localPosition;
 			uiPosition.z = elevation * -HexMetrics.elevationStep;
-			uiRect.localPosition = uiPosition;
+            //对整个单元格做高度的扰动
+            uiPosition.z = -position.y;
+            uiRect.localPosition = uiPosition;
         }
     }
 
