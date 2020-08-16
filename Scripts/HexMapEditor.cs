@@ -17,6 +17,15 @@ public class HexMapEditor : MonoBehaviour
 
     private Color activeColor;
 
+    //河流的编辑模式，忽略河流，添加或删除河流。
+    enum OptionalToggle
+    {
+        Ignore, Yes, No
+    }
+
+    OptionalToggle riverMode;
+
+
     void Awake () {
         SelectColor(0);
     }
@@ -95,5 +104,10 @@ public class HexMapEditor : MonoBehaviour
     public void ShowUI(bool visible)
     {
         hexGrid.ShowUI(visible);
+    }
+    //设置河流的编辑模式
+    public void SetRiverMode(int mode)
+    {
+        riverMode = (OptionalToggle)mode;
     }
 }
