@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityTemplateProjects;
 
 public class HexMapEditor : MonoBehaviour
 {
@@ -14,6 +16,10 @@ public class HexMapEditor : MonoBehaviour
     public Color[] colors;
 
     public HexGrid hexGrid;
+    //检测拖拽
+    bool isDrag;
+    HexDirection dragDirection;
+    HexCell previousCell;
 
     private Color activeColor;
 
@@ -31,8 +37,12 @@ public class HexMapEditor : MonoBehaviour
     }
 
     void Update () {
-        if (Input.GetMouseButton(0)) {
+        if (Input.GetMouseButton(0) ) {
             HandleInput();
+        }
+        else
+        {
+            previousCell = null;
         }
     }
 
@@ -40,11 +50,47 @@ public class HexMapEditor : MonoBehaviour
     {
         Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
+        Debug.Log("HandleInput");
         if (Physics.Raycast(inputRay, out hit))
         {
-            EditCells(hexGrid.GetCell(hit.point));
+            Debug.Log("Raycast hit");
+            HexCell currentCell = hexGrid.GetCell(hit.point);
+            //检测拖拽
+            if (previousCell && previousCell != currentCell)
+            {
+                ValidateDrag(currentCell);
+            }
+            else
+            {
+                isDrag = false;
+            }
+            EditCells(currentCell);
+            previousCell = currentCell;
+        }
+        else
+        {
+            previousCell = null;
         }
     }
+
+    //判断是否是有效拖拽
+    void ValidateDrag(HexCell currentCell)
+    {
+        for (
+            dragDirection = HexDirection.NE;
+            dragDirection <= HexDirection.NW;
+            dragDirection++
+        )
+        {
+            if (previousCell.GetNeighbor(dragDirection) == currentCell)
+            {
+                isDrag = true;
+                return;
+            }
+        }
+        isDrag = false;
+    }
+
     void EditCells(HexCell center)
     {
         int centerX = center.coordinates.X;
@@ -69,6 +115,7 @@ public class HexMapEditor : MonoBehaviour
 
     void EditCell(HexCell cell)
     {
+        Debug.Log("EditCell");
         if (cell)
         {
             if (applyColor)
@@ -78,6 +125,19 @@ public class HexMapEditor : MonoBehaviour
             if (applyElevation)
             {
                 cell.Elevation = activeElevation;
+            }
+            //添加或移除河流
+            if (riverMode == OptionalToggle.No)
+            {
+                cell.RemoveRiver();
+            }
+            else if (isDrag && riverMode == OptionalToggle.Yes)
+            {
+                HexCell otherCell = cell.GetNeighbor(dragDirection.Opposite());
+                if (otherCell)
+                {
+                    otherCell.SetOutgoingRiver(dragDirection);
+                }
             }
         }
     }

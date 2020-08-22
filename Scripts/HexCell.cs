@@ -248,4 +248,14 @@ public class HexCell : MonoBehaviour
     {
         chunk.Refresh();
     }
+
+    public float StreamBedY
+    {
+        get
+        {
+            return
+                (elevation + HexMetrics.streamBedElevationOffset) *
+                HexMetrics.elevationStep;
+        }
+    }
 }

@@ -61,7 +61,26 @@ public class HexMesh : MonoBehaviour {
             center + HexMetrics.GetFirstSolidCorner(direction),
             center + HexMetrics.GetSecondSolidCorner(direction)
         );
-
+        if (cell.HasRiver)
+        {
+            //检测是否有河，需要设置河床
+            if (cell.HasRiverThroughEdge(direction))
+            {
+                e.v3.y = cell.StreamBedY;
+                if (cell.HasRiverBeginOrEnd)
+                {
+                    TriangulateWithRiverBeginOrEnd(direction, cell, center, e);
+                }
+                else
+                {
+                    TriangulateWithRiver(direction, cell, center, e);
+                }
+            }
+        }
+        else
+        {
+            TriangulateEdgeFan(center, e, cell.Color);
+        }
         TriangulateEdgeFan(center, e, cell.Color);
 
         if (direction <= HexDirection.SE)
@@ -69,14 +88,82 @@ public class HexMesh : MonoBehaviour {
             TriangulateConnection(direction, cell, e);
         }
     }
+
+    void TriangulateWithRiverBeginOrEnd(
+        HexDirection direction, HexCell cell, Vector3 center, EdgeVertices e
+    )
+    {
+        EdgeVertices m = new EdgeVertices(
+            Vector3.Lerp(center, e.v1, 0.5f),
+            Vector3.Lerp(center, e.v5, 0.5f)
+        );
+        m.v3.y = e.v3.y;
+    }
+    //河流三角划分
+    void TriangulateWithRiver(
+        HexDirection direction, HexCell cell, Vector3 center, EdgeVertices e
+    )
+    {
+        Vector3 centerL, centerR;
+        if (cell.HasRiverThroughEdge(direction.Opposite()))
+        {
+            centerL = center +
+                HexMetrics.GetFirstSolidCorner(direction.Previous()) * 0.25f;
+            centerR = center +
+                HexMetrics.GetSecondSolidCorner(direction.Next()) * 0.25f;
+        }
+
+        else if (cell.HasRiverThroughEdge(direction.Next()))
+        {
+            centerL = center;
+            centerR = Vector3.Lerp(center, e.v5, 2f / 3f);
+        }
+        else if (cell.HasRiverThroughEdge(direction.Previous()))
+        {
+            centerL = Vector3.Lerp(center, e.v1, 2f / 3f);
+            centerR = center;
+        }
+        else
+        {
+            centerL = centerR = center;
+        }
+        center = Vector3.Lerp(centerL, centerR, 0.5f);
+        //中心和边缘之间创建边缘顶点可以找到中间线。
+        EdgeVertices m = new EdgeVertices(
+            Vector3.Lerp(centerL, e.v1, 0.5f),
+            Vector3.Lerp(centerR, e.v5, 0.5f),
+            1f / 6f
+        );
+        //调整中间边缘的中间顶点以及中心，使它们成为通道底部。
+        m.v3.y = center.y = e.v3.y;
+        //fill the space between the middle and edge lines.
+        TriangulateEdgeStrip(m, cell.Color, e, cell.Color);
+        AddTriangle(centerL, m.v1, m.v2);
+        AddTriangleColor(cell.Color);
+        AddQuad(centerL, center, m.v2, m.v3);
+        AddQuadColor(cell.Color);
+        AddQuad(center, centerR, m.v3, m.v4);
+        AddQuadColor(cell.Color);
+        AddTriangle(centerR, m.v4, m.v5);
+        AddTriangleColor(cell.Color);
+    }
+    void AddQuadColor(Color color)
+    {
+        colors.Add(color);
+        colors.Add(color);
+        colors.Add(color);
+        colors.Add(color);
+    }
     //边上增加两个点后的三角连接
     void TriangulateEdgeFan(Vector3 center, EdgeVertices edge, Color color)
     {
         AddTriangle(center, edge.v1, edge.v2);
         AddTriangleColor(color);
-        AddTriangle(center, edge.v2, edge.v3);
+        AddTriangle(center, edge.v2, edge.v4);
         AddTriangleColor(color);
         AddTriangle(center, edge.v3, edge.v4);
+        AddTriangleColor(color);
+        AddTriangle(center, edge.v4, edge.v5);
         AddTriangleColor(color);
     }
     //triangulating a strip of quads between two edges
@@ -87,9 +174,11 @@ public class HexMesh : MonoBehaviour {
     {
         AddQuad(e1.v1, e1.v2, e2.v1, e2.v2);
         AddQuadColor(c1, c2);
-        AddQuad(e1.v2, e1.v3, e2.v2, e2.v3);
+        AddQuad(e1.v2, e1.v4, e2.v2, e2.v4);
         AddQuadColor(c1, c2);
         AddQuad(e1.v3, e1.v4, e2.v3, e2.v4);
+        AddQuadColor(c1, c2);
+        AddQuad(e1.v4, e1.v5, e2.v4, e2.v5);
         AddQuadColor(c1, c2);
     }
   
@@ -107,9 +196,13 @@ public class HexMesh : MonoBehaviour {
         bridge.y = neighbor.Position.y - cell.Position.y;
         EdgeVertices e2 = new EdgeVertices(
             e1.v1 + bridge,
-            e1.v4 + bridge
+            e1.v5 + bridge
         );
-
+        //检测河，设置河床的特殊连接
+        if (cell.HasRiverThroughEdge(direction))
+        {
+            e2.v3.y = neighbor.StreamBedY;
+        }
         if (cell.GetEdgeType(direction) == HexEdgeType.Slope)
         {
             TriangulateEdgeTerraces(e1, cell, e2, neighbor);
@@ -122,7 +215,7 @@ public class HexMesh : MonoBehaviour {
         HexCell nextNeighbor = cell.GetNeighbor(direction.Next());
         if (direction <= HexDirection.E && nextNeighbor != null)
         {
-            Vector3 v5 = e1.v4 + HexMetrics.GetBridge(direction.Next());
+            Vector3 v5 = e1.v5 + HexMetrics.GetBridge(direction.Next());
             //连接噪音导致高度不同的点
             v5.y = nextNeighbor.Position.y;
             //现在triangulateconnection必须找出最低的单元格是什么。首先，检查被三角剖分的单元格是否比其相邻单元格低，或被束缚到最低。如果是这种情况，我们可以将其用作底部单元格。
@@ -131,14 +224,14 @@ public class HexMesh : MonoBehaviour {
                 if (cell.Elevation <= nextNeighbor.Elevation)
                 {
                     TriangulateCorner(
-                        e1.v4, cell, e2.v4, neighbor, v5, nextNeighbor
+                        e1.v5, cell, e2.v5, neighbor, v5, nextNeighbor
                     );
                 }
                 //如果最里面的检查失败，则意味着下一个邻居是最低的单元。我们必须逆时针旋转三角形以保持正确的方向。
                 else
                 {
                     TriangulateCorner(
-                        v5, nextNeighbor, e1.v4, cell, e2.v4, neighbor
+                        v5, nextNeighbor, e1.v5, cell, e2.v5, neighbor
                     );
                 }
             }
@@ -146,13 +239,13 @@ public class HexMesh : MonoBehaviour {
             else if (neighbor.Elevation <= nextNeighbor.Elevation)
             {
                 TriangulateCorner(
-                    e2.v4, neighbor, v5, nextNeighbor, e1.v4, cell
+                    e2.v5, neighbor, v5, nextNeighbor, e1.v5, cell
                 );
             }
             else
             {
                 TriangulateCorner(
-                    v5, nextNeighbor, e1.v4, cell, e2.v4, neighbor
+                    v5, nextNeighbor, e1.v5, cell, e2.v5, neighbor
                 );
             }
         }

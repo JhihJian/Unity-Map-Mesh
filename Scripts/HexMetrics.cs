@@ -20,14 +20,15 @@ public class HexMetrics : MonoBehaviour
     //节点扰动 噪音纹理
     public static Texture2D noiseSource;
     //节点的噪音扰动强度
-    public const float cellPerturbStrength = 4f;
+    public const float cellPerturbStrength = 0f;//4f;
     //缩放节点采集坐标，使噪音更加平滑
     public const float noiseScale = 0.003f;
     //高度的扰动强度
     public const float elevationPerturbStrength = 1.5f;
     //定义plane中块的数量
     public const int chunkSizeX = 5, chunkSizeZ = 5;
-
+    //定义河床的深度
+    public const float streamBedElevationOffset = -1f;
 
     static Vector3[] corners = {
         new Vector3(0f, 0f, outerRadius),
